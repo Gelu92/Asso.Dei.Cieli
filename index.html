@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#24305e">
+<meta name="description" content="Asso dei Cieli di Gelu inc. Sparatutto verticale per cellulare.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Asso dei Cieli">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Asso dei Cieli</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Chakra+Petch:wght@500;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <canvas id="c" aria-label="Campo di gioco"></canvas>
+
+  <button class="btn ghost" id="landSkip" hidden>Salta</button>
+  <div id="hud" hidden>
+    <div class="hud-left">
+      <div class="hud-line"><div id="score">0</div><div id="mult" hidden>x2</div></div>
+      <div class="hud-line"><div id="hearts"></div><div id="pow" aria-label="Potenza"></div></div>
+      <div id="obj" hidden></div>
+    </div>
+    <div class="spacer"></div>
+    <div class="hud-right">
+      <div id="wave">Ondata 1</div>
+      <div class="coins" id="coinsHud"></div>
+    </div>
+    <button class="icon-btn" id="muteBtn" aria-label="Audio"></button>
+    <button class="icon-btn" id="pauseBtn" aria-label="Pausa"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="5" height="16" rx="1.5"/><rect x="14" y="4" width="5" height="16" rx="1.5"/></svg></button>
+  </div>
+  <button id="bombBtn" hidden aria-label="Sgancia bomba"><span><svg viewBox="0 0 24 24"><circle cx="11" cy="14" r="7"/><path d="M14 7l3-3M17 4l2 1M17 4l1-2" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg><span id="bombN">2</span></span></button>
+  <button id="spBtn" hidden aria-label="Abilità speciale"><svg viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg></button>
+
+  <div class="overlay" id="menu">
+    <div class="card">
+      <div class="eyebrow">Squadriglia del tramonto</div>
+      <div class="title-block">
+        <h1>Asso dei Cieli</h1>
+        <div class="studio">Gelu inc.</div>
+      </div>
+      <p class="tagline">Trascina il dito per pilotare. Il fuoco è automatico.</p>
+      <div class="diff">
+        <div class="seg" role="radiogroup" aria-label="Difficoltà" id="diffSeg">
+          <button role="radio" data-diff="recluta">Recluta</button>
+          <button role="radio" data-diff="pilota">Pilota</button>
+          <button role="radio" data-diff="asso">Asso</button>
+        </div>
+        <p class="note" id="diffDesc"></p>
+      </div>
+      <div class="stat">
+        <div><span>Record</span><strong id="bestMenu">0</strong></div>
+        <div><span>Monete</span><strong class="coins" id="coinsMenu"></strong></div>
+      </div>
+      <button class="btn" id="playBtn">Decolla</button>
+      <div class="modes">
+        <button class="btn teal daily" id="campaignBtn">Campagna<small id="campaignSub">Missione 1</small></button>
+        <button class="btn teal daily" id="dailyBtn">Sfida<small id="dailySub"></small></button>
+        <button class="btn teal daily" id="endlessBtn">Infinita<small id="endlessSub">Senza boss</small></button>
+        <button class="btn teal daily" id="rushBtn">Boss Rush<small id="rushSub">5 boss</small></button>
+        <button class="btn teal daily" id="partyBtn">A turni<small id="partySub">2-4 amici</small></button>
+        <button class="btn teal daily" id="zenBtn">Zen<small>Senza stress</small></button>
+        <button class="btn teal daily season" id="seasonBtn" hidden>Evento<small id="seasonSub"></small></button>
+      </div>
+      <div class="tiles">
+        <button class="tile" id="hangarBtn"><svg viewBox="0 0 24 24"><path d="M3 20V10l9-6 9 6v10"/><path d="M8 20v-6h8v6"/></svg>Hangar</button>
+        <button class="tile" id="missionsBtn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".5"/></svg>Missioni</button>
+        <button class="tile" id="boardBtn"><svg viewBox="0 0 24 24"><path d="M5 20V12M12 20V5M19 20v-5"/></svg>Classifica</button>
+        <button class="tile" id="profileBtn"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="5"/><path d="M8.5 13.5L7 21l5-2.5 5 2.5-1.5-7.5"/></svg>Profilo<span class="dot" id="medalDot" hidden></span></button>
+      </div>
+      <div class="menu-foot">
+        <button class="toggle music-toggle" aria-pressed="true"><i></i>Musica</button>
+        <button class="link-btn" id="howBtn">Come si gioca</button>
+        <button class="link-btn" id="settingsBtn">Impostazioni</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="missionsOv" hidden>
+    <div class="card">
+      <div class="hangar-head"><h2>Missioni</h2><strong class="coins" id="missionsCoins"></strong></div>
+      <p class="note">Completa le missioni per guadagnare monete. Quando ne finisci una, ne arriva subito un'altra.</p>
+      <div class="list" id="missionList"></div>
+      <p class="note" id="missionsDone"></p>
+      <button class="btn ghost" id="missionsBack">Indietro</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="shareOv" hidden>
+    <div class="card">
+      <h2>Condividi punteggio</h2>
+      <img id="shareImg" alt="">
+      <p class="note" id="shareNote"></p>
+      <button class="btn" id="shareGo">Condividi</button>
+      <button class="btn ghost" id="shareCopy">Copia testo</button>
+      <button class="btn ghost" id="shareClose">Chiudi</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="boxOv" hidden>
+    <div class="card">
+      <div class="bigbox" id="bigBox" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M6 18h36v24H6z" fill="#7b5cff"/><g class="lid"><path d="M4 12h40v8H4z" fill="#a46be0"/><path d="M24 12c-6-10-14-4-8 0M24 12c6-10 14-4 8 0" stroke="#ffe36e" stroke-width="3" fill="none"/></g><path d="M21 18h6v24h-6z" fill="#ffe36e"/></svg></div>
+      <h2 id="prizeTitle"></h2>
+      <p class="story" id="prizeText"></p>
+      <canvas id="prizeCanvas" width="160" height="160" hidden></canvas>
+      <button class="btn" id="boxAgain"></button>
+      <button class="btn ghost" id="boxClose">Indietro</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="loginOv" hidden>
+    <div class="card">
+      <div class="eyebrow" id="loginEyebrow"></div>
+      <h2 id="loginTitle"></h2>
+      <div class="days" id="loginDays"></div>
+      <p class="note" id="loginNote"></p>
+      <button class="btn" id="loginClaim"></button>
+    </div>
+  </div>
+
+  <div class="overlay" id="encyOv" hidden>
+    <div class="card">
+      <h2 id="encyTitle">Enciclopedia</h2>
+      <p class="note" id="encyNote"></p>
+      <div class="section-label" id="encyEnemiesLabel"></div>
+      <div class="ency" id="encyEnemies"></div>
+      <div class="section-label" id="encyBossesLabel"></div>
+      <div class="ency" id="encyBosses"></div>
+      <button class="btn ghost" id="encyBack">Indietro</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="partyOv" hidden>
+    <div class="card" id="partyCard"></div>
+  </div>
+
+  <div class="overlay" id="campaignOv" hidden>
+    <div class="card">
+      <div class="eyebrow">Squadriglia del tramonto</div>
+      <h2>Campagna</h2>
+      <p class="note" id="campaignProgress"></p>
+      <div class="missions" id="campList"></div>
+      <button class="btn ghost" id="campaignBack">Indietro</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="briefOv" hidden>
+    <div class="card">
+      <div class="eyebrow" id="briefNum">Missione 1</div>
+      <h2 id="briefTitle"></h2>
+      <p class="story" id="briefStory"></p>
+      <div class="goal"><span>Obiettivo</span><strong id="briefGoal"></strong></div>
+      <div class="stat">
+        <div><span>Ricompensa</span><strong class="coins" id="briefReward"></strong></div>
+        <div><span>Record</span><strong id="briefBest">–</strong></div>
+      </div>
+      <button class="btn" id="briefGo">Decolla</button>
+      <button class="btn ghost" id="briefBack">Indietro</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="settingsOv" hidden>
+    <div class="card">
+      <h2>Impostazioni</h2>
+      <div class="settings">
+        <label class="set-row" for="setMusic"><span>Musica</span><output id="setMusicOut"></output>
+          <input type="range" id="setMusic" min="0" max="100" step="5"></label>
+        <label class="set-row" for="setSfx"><span>Effetti sonori</span><output id="setSfxOut"></output>
+          <input type="range" id="setSfx" min="0" max="100" step="5"></label>
+        <div class="set-row inline"><span>Vibrazione</span><button class="toggle" id="setVib" aria-pressed="true" aria-label="Vibrazione"><i></i></button></div>
+        <div class="set-row inline"><span>Effetti ridotti<small class="set-hint">Per telefoni meno potenti. Si attiva da solo se il gioco rallenta.</small></span><button class="toggle" id="setLow" aria-pressed="false" aria-label="Effetti ridotti"><i></i></button></div>
+        <div class="set-row"><span>Lingua</span>
+          <div class="seg two" role="radiogroup" aria-label="Lingua" id="setLang">
+            <button role="radio" data-lang="it">Italiano</button>
+            <button role="radio" data-lang="en">English</button>
+          </div></div>
+        <div class="set-row"><span>Eventi stagionali</span>
+          <div class="seg four4" role="radiogroup" aria-label="Eventi stagionali" id="setSeason">
+            <button role="radio" data-season="auto">Auto</button>
+            <button role="radio" data-season="halloween">Halloween</button>
+            <button role="radio" data-season="xmas">Natale</button>
+            <button role="radio" data-season="off">No</button>
+          </div></div>
+        <div class="set-row"><span>Pulsante bomba</span>
+          <div class="seg two" role="radiogroup" aria-label="Posizione pulsante bomba" id="setBomb">
+            <button role="radio" data-side="left">A sinistra</button>
+            <button role="radio" data-side="right">A destra</button>
+          </div></div>
+      </div>
+      <div class="section-label">Salvataggio</div>
+      <p class="note left">I progressi restano solo in questo browser. Per portarli su un altro telefono o sulla versione online, esporta il codice e importalo là.</p>
+      <div class="row2">
+        <button class="btn ghost" id="exportBtn">Esporta progressi</button>
+        <button class="btn ghost" id="importBtn">Importa progressi</button>
+      </div>
+      <div class="savebox" id="saveBox" hidden>
+        <label for="saveCode" id="saveLabel">Il tuo codice</label>
+        <textarea id="saveCode" rows="4" spellcheck="false" autocomplete="off"></textarea>
+        <button class="btn teal" id="saveAction">Copia codice</button>
+        <p class="note" id="saveMsg" role="status"></p>
+      </div>
+      <button class="btn ghost" id="setTut">Rivedi il tutorial</button>
+      <button class="btn ghost danger" id="setReset">Cancella tutti i progressi</button>
+      <p class="note" id="setResetNote" hidden>Tocca di nuovo per confermare: perderai monete, aerei, record e medaglie.</p>
+      <button class="btn" id="settingsBack">Fatto</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="profileOv" hidden>
+    <div class="card">
+      <h2>Profilo pilota</h2>
+      <div class="pilot">
+        <canvas id="pilotPreview" width="128" height="128" aria-hidden="true"></canvas>
+        <div class="pilot-fields">
+          <label for="pilotName" id="pilotNameLabel">Nome da pilota</label>
+          <input id="pilotName" maxlength="16" autocomplete="off">
+        </div>
+      </div>
+      <div class="section-label" id="emblemLabel">Stemma</div>
+      <div class="emblems" id="emblemList" role="radiogroup" aria-label="Stemma"></div>
+      <button class="btn teal" id="encyBtn">Enciclopedia</button>
+      <div class="section-label">Statistiche</div>
+      <div class="kv" id="statGrid"></div>
+      <div class="section-label">Abbattimenti per tipo</div>
+      <div class="kv" id="typeGrid"></div>
+      <div class="medal-head"><div class="section-label">Medaglie</div><span class="note" id="medalCount"></span></div>
+      <p class="note">Ogni medaglia vale 75 monete.</p>
+      <div class="medals" id="medalList"></div>
+      <button class="btn ghost" id="profileBack">Indietro</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="boardOv" hidden>
+    <div class="card">
+      <h2>Classifica</h2>
+      <div style="width:100%;overflow-x:auto" id="boardWrap"></div>
+      <button class="btn ghost" id="boardBack">Indietro</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="tutOv" hidden>
+    <div class="card">
+      <div class="eyebrow" id="tutStep">1 di 3</div>
+      <div class="slide" id="tutSlide"></div>
+      <div class="dots" id="tutDots"></div>
+      <button class="btn" id="tutNext">Avanti</button>
+      <button class="btn ghost" id="tutSkip">Salta</button>
+    </div>
+  </div>
+
+  <div id="toast" class="hide" role="status" aria-live="polite"></div>
+
+  <div id="splash" role="img" aria-label="Gelu inc. presenta Asso dei Cieli">
+    <svg class="emblem" viewBox="0 0 220 120" aria-hidden="true">
+      <defs>
+        <path id="wing" d="M84 58 C62 40 30 34 6 26 C20 42 34 48 46 52 C32 53 20 54 8 50 C22 61 40 64 54 64 C44 67 34 69 22 69 C40 78 62 76 82 68 Z"/>
+      </defs>
+      <g class="wing-l"><use href="#wing" fill="#ffe36e"/></g>
+      <g class="wing-r"><use href="#wing" fill="#ffe36e" transform="translate(220 0) scale(-1 1)"/></g>
+      <g class="roundel">
+        <circle cx="110" cy="60" r="32" fill="#ff5d73"/>
+        <circle cx="110" cy="60" r="25" fill="#1a1530"/>
+        <circle cx="110" cy="60" r="19" fill="#2bb3a6"/>
+        <text x="110" y="69" text-anchor="middle" font-family="Bungee, Impact, sans-serif" font-size="26" fill="#fff4e0">G</text>
+      </g>
+    </svg>
+    <div class="brand">Gelu inc.</div>
+    <div class="presents">presenta</div>
+    <div class="load"><i></i></div>
+  </div>
+
+  <div class="overlay" id="hangarOv" hidden>
+    <div class="card">
+      <div class="hangar-head"><h2>Hangar</h2><strong class="coins" id="hangarCoins"></strong></div>
+      <div class="boxrow">
+        <div class="boxicon" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M6 18h36v24H6z" fill="#7b5cff"/><path d="M4 12h40v8H4z" fill="#a46be0"/><path d="M21 12h6v30h-6z" fill="#ffe36e"/><path d="M24 12c-6-10-14-4-8 0M24 12c6-10 14-4 8 0" stroke="#ffe36e" stroke-width="3" fill="none"/></svg></div>
+        <div class="boxtxt"><h3 id="boxTitle">Scatola misteriosa</h3><p id="boxDesc"></p></div>
+        <button class="buy" id="boxBuy"></button>
+      </div>
+      <div class="section-label">Aerei</div>
+      <div class="planes" id="planeList"></div>
+      <div class="section-label" id="droneLabel">Drone</div>
+      <div class="drone" id="droneBox">
+        <canvas id="dronePreview" width="96" height="96" aria-hidden="true"></canvas>
+        <div class="drone-info">
+          <div class="drone-head"><strong id="droneLvl"></strong><button class="toggle" id="droneOn" aria-pressed="true"><i></i><span id="droneOnTxt"></span></button></div>
+          <div class="bar"><span><i id="droneXp"></i></span><small id="droneXpTxt"></small></div>
+          <p class="note left" id="droneStats"></p>
+        </div>
+        <div class="seg three" role="radiogroup" id="droneShape"></div>
+        <div class="swatches" role="radiogroup" id="droneColor"></div>
+      </div>
+      <div class="section-label" id="liveryLabel">Livrea</div>
+      <div class="liveries" id="liveryList"></div>
+      <div class="section-label">Potenziamenti</div>
+      <div class="upgrades" id="upgList"></div>
+      <button class="btn" id="hangarPlay">Decolla</button>
+      <button class="btn ghost" id="hangarBack">Indietro</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="pauseOv" hidden>
+    <div class="card">
+      <h2>In pausa</h2>
+      <button class="btn" id="resumeBtn">Riprendi</button>
+      <button class="btn ghost" id="quitBtn">Torna al menu</button>
+      <button class="link-btn" id="pauseSettings">Impostazioni</button>
+      <button class="toggle music-toggle" aria-pressed="true"><i></i>Musica</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="overOv" hidden>
+    <div class="card">
+      <div class="eyebrow" id="overEyebrow">Missione finita</div>
+      <h2 id="overTitle">Abbattuto!</h2>
+      <div class="stat">
+        <div><span>Punti</span><strong id="finalScore">0</strong></div>
+        <div><span id="bestOverLabel">Record</span><strong id="bestOver">0</strong></div>
+      </div>
+      <div class="record" id="newRec" hidden>Nuovo record!</div>
+      <p class="note" id="rankLine" hidden></p>
+      <div class="stat">
+        <div><span>Ondata</span><strong id="waveOver">1</strong></div>
+        <div><span>Abbattimenti</span><strong id="kills">0</strong></div>
+        <div><span>Monete</span><strong class="coins" id="coinsOver"></strong></div>
+      </div>
+      <button class="btn" id="againBtn">Riprova</button>
+      <button class="btn teal" id="overHangar">Hangar</button>
+      <button class="btn ghost" id="shareBtn"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>Condividi punteggio</button>
+      <button class="btn ghost" id="menuBtn">Menu</button>
+    </div>
+  </div>
+</div>
+
+<script src="01-base.js"></script>
+<script src="02-scenario.js"></script>
+<script src="03-audio.js"></script>
+<script src="04-stato.js"></script>
+<script src="05-hangar.js"></script>
+<script src="06-comandi.js"></script>
+<script src="07-nemici.js"></script>
+<script src="08-combattimento.js"></script>
+<script src="09-extra.js"></script>
+<script src="10-modalita.js"></script>
+<script src="11-aggiornamento.js"></script>
+<script src="12-disegno.js"></script>
+<script src="13-avvio.js"></script>
+</body>
+</html>
