@@ -446,6 +446,25 @@ refreshMenuStats(); renderDiff(); renderMute();
 requestAnimationFrame(frame);
 
 /* installable app: only active when served from a real site (e.g. GitHub Pages) */
+/* install button: Chrome hands us the install prompt, we show our own button for it */
+let deferredInstall = null;
+const isInstalled = () => matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || navigator.standalone === true;
+addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredInstall = e;
+  if (!isInstalled()) $('installBtn').hidden = false;
+});
+addEventListener('appinstalled', () => {
+  deferredInstall = null; $('installBtn').hidden = true;
+  toast('<span>' + L('App installata! La trovi sulla schermata Home', 'App installed! Find it on your home screen') + '</span>');
+});
+$('installBtn').onclick = () => {
+  initAudio();
+  if (!deferredInstall) return;
+  try {
+    deferredInstall.prompt();
+    deferredInstall.userChoice.then(() => { deferredInstall = null; $('installBtn').hidden = true; }).catch(() => {});
+  } catch(e){}
+};
 if ('serviceWorker' in navigator && document.querySelector('link[rel="manifest"]')){
   addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
 }

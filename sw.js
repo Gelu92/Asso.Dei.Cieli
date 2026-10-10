@@ -1,32 +1,52 @@
-// Asso dei Cieli - funzionamento offline
-const CACHE = 'asso-dei-cieli-v18';
-const FILES = ['./', './index.html', './manifest.webmanifest', './style.css', './01-base.js', './02-scenario.js', './03-audio.js', './04-stato.js', './05-hangar.js', './06-comandi.js', './07-nemici.js', './08-combattimento.js', './09-extra.js', './10-modalita.js', './11-aggiornamento.js', './12-disegno.js', './13-avvio.js',
-  './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png'];
+/* Asso dei Cieli - service worker (stesso schema di Lucci's Space Race).
+   Pagina: prima la rete, poi la copia salvata se sei offline.
+   Altri file: dalla copia salvata, aggiornata in background. */
+const CACHE = 'asso-dei-cieli-v20';
+const CORE = ['./', './index.html', './manifest.webmanifest', './style.css', './icon-192.png', './icon-512.png',
+  './01-base.js', './02-scenario.js', './03-audio.js', './04-stato.js', './05-hangar.js', './06-comandi.js', './07-nemici.js', './08-combattimento.js', './09-extra.js', './10-modalita.js', './11-aggiornamento.js', './12-disegno.js', './13-avvio.js'];
 
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
+self.addEventListener('install', function (e) {
+  e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(CORE); }).then(function () { return self.skipWaiting(); }));
 });
 
-self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys()
-    .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
-    .then(() => self.clients.claim()));
+self.addEventListener('activate', function (e) {
+  e.waitUntil(
+    caches.keys().then(function (keys) {
+      return Promise.all(keys.filter(function (k) { return k !== CACHE; }).map(function (k) { return caches.delete(k); }));
+    }).then(function () { return self.clients.claim(); })
+  );
 });
 
-// I file del gioco: prima la rete (cosi' gli aggiornamenti arrivano subito), poi la cache se sei offline.
-// I font di Google: prima la cache, poi la rete.
-self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') return;
-  const url = e.request.url;
-  if (url.startsWith(self.location.origin)){
-    e.respondWith(fetch(e.request)
-      .then(r => { if (r.ok){ const copy = r.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); } return r; })
-      .catch(() => caches.match(e.request, { ignoreSearch: true }).then(hit => hit || caches.match('./index.html'))));
+self.addEventListener('fetch', function (e) {
+  var req = e.request;
+  if (req.method !== 'GET') return;
+  var url = new URL(req.url);
+  var sameOrigin = url.origin === self.location.origin;
+  var isDoc = req.mode === 'navigate' || (sameOrigin && (url.pathname.endsWith('/') || url.pathname.endsWith('.html')));
+  if (isDoc) {
+    e.respondWith(
+      fetch(req, { cache: 'no-cache' }).then(function (res) {
+        var copy = res.clone();
+        caches.open(CACHE).then(function (c) { c.put(req, copy); });
+        return res;
+      }).catch(function () {
+        return caches.match(req).then(function (r) { return r || caches.match('./index.html'); });
+      })
+    );
     return;
   }
-  if (url.includes('fonts.g')){
-    e.respondWith(caches.match(e.request).then(hit => hit || fetch(e.request).then(r => {
-      const copy = r.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); return r;
-    })));
-  }
+  var okHost = sameOrigin || url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com';
+  if (!okHost) return;
+  e.respondWith(
+    caches.match(req).then(function (hit) {
+      var net = fetch(req).then(function (res) {
+        if (res && (res.ok || res.type === 'opaque')) {
+          var copy = res.clone();
+          caches.open(CACHE).then(function (c) { c.put(req, copy); });
+        }
+        return res;
+      }).catch(function () { return hit; });
+      return hit || net;
+    })
+  );
 });
